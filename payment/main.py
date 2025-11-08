@@ -40,6 +40,10 @@ class Order(HashModel):
     class Meta:
         database = redis
 
+@app.get("/orders/{pk}")
+def get(pk: str):
+    return Order.get(pk)
+
 @app.post("/orders")
 async def create(request: Request, background_tasks: BackgroundTasks):
     body = await request.json()
