@@ -1,2 +1,4 @@
 fastapi==0.75.0
 redis-om==0.0.20
+python-dotenv
+uvicorn
