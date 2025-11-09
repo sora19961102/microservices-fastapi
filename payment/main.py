@@ -40,23 +40,34 @@ class Order(HashModel):
     class Meta:
         database = redis
 
-@app.get("/orders/{pk}")
+class Order(HashModel):
+    product_id: str
+    price: float
+    fee: float
+    total: float
+    quantity: int
+    status: str  # pending, completed, refunded
+
+    class Meta:
+        database = redis
+
+
+@app.get('/orders/{pk}')
 def get(pk: str):
     return Order.get(pk)
 
-@app.post("/orders")
-async def create(request: Request, background_tasks: BackgroundTasks):
+@app.post('/orders')
+async def create(request: Request, background_tasks: BackgroundTasks):  # id, quantity
     body = await request.json()
-    req = requests.get(f"http://localhost:8000/products/{body['id']}")
+    req = requests.get('http://localhost:8000/products/%s' % body['id'])
     product = req.json()
-    quantity = body.get('quantity', 1)
 
     order = Order(
         product_id=body['id'],
         price=product['price'],
-        fee=0.2 * product['price'] * quantity,
-        total=1.2 * product['price'] * quantity,
-        quantity=quantity,
+        fee=0.2 * product['price'],
+        total=1.2 * product['price'],
+        quantity=body['quantity'],
         status='pending'
     )
     order.save()
@@ -65,6 +76,7 @@ async def create(request: Request, background_tasks: BackgroundTasks):
     return order
 
 def order_completed(order: Order):
+    time.sleep(5)
     order.status = 'completed'
     order.save()
     redis.xadd('order_completed', order.dict(), '*')
