@@ -2,10 +2,10 @@ from typing import Union
 import os
 from dotenv import load_dotenv
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from redis_om import get_redis_connection, HashModel
+from redis_om import get_redis_connection, HashModel, NotFoundError
 
 # Load environment variables from .env file
 load_dotenv()
@@ -53,7 +53,10 @@ def create(product: Product):
 
 @app.get('/products/{pk}')
 def get(pk: str):
-    return Product.get(pk)
+    try:
+        return Product.get(pk)
+    except NotFoundError:
+        raise HTTPException(status_code=404, detail=f"Product with id {pk} not found")
 
 @app.delete('/products/{pk}')
 def delete(pk: str):
